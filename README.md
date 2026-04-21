@@ -55,6 +55,9 @@ Stats covered: goals, shots, shots on target, possession, assists, passes, passi
 - Sentence-BERT `all-MiniLM-L6-v2` encodes 189 evidence strings → 384-d dense vectors
 - FAISS `IndexFlatL2` stores and retrieves top-k most semantically similar matches
 - Retrieved evidence inserted into a structured prompt — Mistral-7B can only use verified facts
+## 🔄 Pipeline
+
+![RAG + SHAP Pipeline](viz_08_rag_pipeline.png)
 
 ### 🤖 Local Mistral-7B Inference
 - `Mistral-7B-Instruct-v0.2` in Q4_K_M quantized form via `llama.cpp`
