@@ -23,19 +23,32 @@ General-purpose LLMs produce fluent football summaries but hallucinate statistic
 **Explainable Match Summaries** grounds every summary in verified UCL-2025 match statistics using a RAG pipeline, and adds a SHAP explainability layer so analysts can see exactly which features drove the model's assessment — all running locally with no paid API.
 
 Three core contributions:
-- 📚 **Self-curated UCL-2025 Dataset** — 189 UEFA Champions League 2025 matches, 142 columns per match, manually compiled and verified
-- 🔍 **RAG Pipeline** — Sentence-BERT + FAISS retrieval feeds verified match facts directly into the Mistral-7B prompt
-- 🔍 **SHAP Explainability** — LinearExplainer over key match features surfaces which stats most influenced the generated summary
+- 📚 **Self-Curated UCL-2025 Dataset** — 189 UEFA Champions League 2025 matches, 142 columns per match, **manually collected by the author directly from the official UEFA website (uefa.com)** — independent of any previously published database or third-party data provider
+- 🔍 **RAG Pipeline** — Sentence-BERT + FAISS retrieval feeds verified match facts directly into the Mistral-7B prompt, eliminating hallucination within the knowledge base scope
+- 📊 **SHAP Explainability** — LinearExplainer over key match features surfaces which stats most influenced the generated summary
+
+---
+
+## 📂 Dataset
+
+> ⚠️ **Original Dataset — Do Not Confuse With Third-Party Sources**
+>
+> The `UCL-2025_Team_Stats.xlsx` file included in this repository was **independently curated by the author** by manually collecting match statistics directly from the **official UEFA website ([uefa.com](https://www.uefa.com))** across all stages of the 2024/25 UEFA Champions League season. It is **not derived from Opta, StatsBomb, or any other third-party data provider** and was first published as part of this project.
+
+| Property | Value |
+|---|---|
+| Matches | 189 |
+| Columns | 142 |
+| Phases | League Phase, Play-Off, Round of 16, Quarter-finals, Semi-finals, Final |
+| Source | Official UEFA website (manually collected) |
+| Missing values | 0 |
+| Duplicates | 0 |
+
+Stats covered: goals, shots, shots on target, possession, assists, passes, passing accuracy, fouls, yellow/red cards, xG, corners, offsides, attacks, clear chances.
 
 ---
 
 ## ✨ Features
-
-### 📚 UCL-2025 Dataset
-- 189 UEFA Champions League 2025 matches, 142 columns per match
-- Zero missing values, zero duplicates — manually curated from official match sources
-- Covers League Phase, Play-Off, Quarter-finals, Round of 16, Semi-finals, Final
-- Stats: goals, shots, shots on target, possession, assists, passes, fouls, cards, xG, corners, offsides
 
 ### 🔍 RAG Pipeline
 - Match stats converted to natural language evidence chunks per match
@@ -46,13 +59,20 @@ Three core contributions:
 ### 🤖 Local Mistral-7B Inference
 - `Mistral-7B-Instruct-v0.2` in Q4_K_M quantized form via `llama.cpp`
 - Runs fully on CPU — no GPU required, no paid API
-- Temperature = 0.2 for factual consistency
+- Temperature = 0.2 for factual consistency over creative diversity
 - Context window = 2048 tokens
 
-### 🔍 SHAP Explainability
+### 📊 SHAP Explainability
 - LinearRegression proxy fitted on 4 key match features (goals scored, goals conceded, goal diff, win indicator)
 - SHAP LinearExplainer computes per-match feature attributions
 - Global importance ranking + per-match waterfall plots
+
+### 📈 Exploratory Data Analysis
+- Goals distribution by tournament phase and match outcome
+- Top 12 teams by total goals scored
+- Possession vs match outcome analysis
+- Pearson correlation heatmap of home team match statistics
+- Attacking efficiency — shots on target vs goals per team
 
 ---
 
@@ -116,7 +136,7 @@ jupyter notebook Code.ipynb
 
 Open `Code.ipynb` and run all cells — the notebook handles:
 
-1. Loading UCL-2025 dataset (`UCL-2025_Team_Stats.xlsx`, 189 matches)
+1. Loading `UCL-2025_Team_Stats.xlsx` (189 matches, 142 columns)
 2. EDA — goals distribution, top scorers, possession analysis, correlation heatmap
 3. Evidence builder — converts each match row to a natural language string
 4. Sentence-BERT embedding + FAISS indexing (189 × 384-d vectors)
@@ -140,31 +160,30 @@ print(summary)
 
 ```
 UCL-2025 Dataset (189 matches, 142 columns)
+[Manually curated from uefa.com by the author]
     │
     ▼
 ── OFFLINE PIPELINE (Indexing) ──────────────────────
     │
     ▼
 Evidence Builder
-["Match between Real Madrid and Dortmund. Real Madrid scored 5 goals..."]
+["Match between Real Madrid and Dortmund. Real Madrid scored 5..."]
     │
     ▼
-Sentence-BERT (all-MiniLM-L6-v2)
-→ 384-d dense embeddings per match
+Sentence-BERT (all-MiniLM-L6-v2) → 384-d dense embeddings
     │
     ▼
-FAISS IndexFlatL2
-→ Vector store of 189 match embeddings
+FAISS IndexFlatL2 → Vector store of 189 match embeddings
 
 ── ONLINE PIPELINE (Query) ───────────────────────────
-    │
+
 User Query → Sentence-BERT encode → FAISS top-k retrieval
     │
     ▼
 Retrieved Evidence (top-3 most similar matches)
     │
     ▼
-Structured Prompt → Mistral-7B-Instruct (local, Q4_K_M)
+Structured Prompt → Mistral-7B-Instruct (local, Q4_K_M, CPU)
     │
     ▼
 Grounded Match Summary
@@ -182,7 +201,7 @@ Final Output: Summary + SHAP Attribution
 explainable-match-summaries/
 │
 ├── Code.ipynb                        # Full pipeline — EDA, RAG, Mistral, SHAP
-├── UCL-2025_Team_Stats.xlsx          # Self-curated UCL 2025 dataset (189 matches)
+├── UCL-2025_Team_Stats.xlsx          # Original self-curated UCL 2025 dataset
 ├── viz_08_rag_pipeline.png           # RAG + SHAP pipeline diagram
 ├── requirements.txt                  # Python dependencies
 └── README.md                         # Project documentation
@@ -286,6 +305,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## 🙏 Acknowledgements
 
+- [UEFA](https://www.uefa.com) — official source for all UCL 2025 match statistics (manually collected)
 - [TheBloke](https://huggingface.co/TheBloke) — for the Mistral-7B GGUF quantized model
 - [UKPLab](https://github.com/UKPLab/sentence-transformers) — for Sentence-BERT
 - [Facebook AI](https://github.com/facebookresearch/faiss) — for FAISS
