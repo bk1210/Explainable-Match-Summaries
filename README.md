@@ -1,14 +1,18 @@
-# 🏆 Explainable Match Summaries — RAG + SHAP + Mistral-7B
+# 🏆 Explainable Match Summaries — RAG + SHAP + LLaMA 3.1
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python)
-![Mistral](https://img.shields.io/badge/Mistral--7B-Local_LLM-blueviolet?style=for-the-badge)
+![LLaMA](https://img.shields.io/badge/LLaMA_3.1-Groq_API-blueviolet?style=for-the-badge)
 ![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-orange?style=for-the-badge)
 ![SHAP](https://img.shields.io/badge/SHAP-Explainability-yellow?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Generates factually grounded, explainable football match summaries by combining Retrieval-Augmented Generation (RAG) with SHAP — no hallucinations, no black boxes.**
+
+### 🚀 [Try the Live Demo →](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
+
+[![Open in HuggingFace Spaces](https://img.shields.io/badge/🤗-Live%20Demo%20on%20HuggingFace%20Spaces-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
 
 [Features](#-features) • [How It Works](#-how-it-works) • [Results](#-results) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Contact](#-contact)
 
@@ -20,11 +24,11 @@
 
 General-purpose LLMs produce fluent football summaries but hallucinate statistics. Ask one about a specific match — it might get the winner right but fabricate the scoreline, goalscorers, or disciplinary events. This project fixes that.
 
-**Explainable Match Summaries** grounds every summary in verified UCL-2025 match statistics using a RAG pipeline, and adds a SHAP explainability layer so analysts can see exactly which features drove the model's assessment — all running locally with no paid API.
+**Explainable Match Summaries** grounds every summary in verified UCL-2025 match statistics using a RAG pipeline, and adds a SHAP explainability layer so analysts can see exactly which features drove the model's assessment.
 
 Three core contributions:
 - 📚 **Self-Curated UCL-2025 Dataset** — 189 UEFA Champions League 2025 matches, 142 columns per match, **manually collected by the author directly from the official UEFA website (uefa.com)** — independent of any previously published database or third-party data provider
-- 🔍 **RAG Pipeline** — Sentence-BERT + FAISS retrieval feeds verified match facts directly into the Mistral-7B prompt, eliminating hallucination within the knowledge base scope
+- 🔍 **RAG Pipeline** — Sentence-BERT + FAISS retrieval feeds verified match facts directly into the LLaMA 3.1 prompt, eliminating hallucination within the knowledge base scope
 - 📊 **SHAP Explainability** — LinearExplainer over key match features surfaces which stats most influenced the generated summary
 
 ---
@@ -54,21 +58,18 @@ Stats covered: goals, shots, shots on target, possession, assists, passes, passi
 - Match stats converted to natural language evidence chunks per match
 - Sentence-BERT `all-MiniLM-L6-v2` encodes 189 evidence strings → 384-d dense vectors
 - FAISS `IndexFlatL2` stores and retrieves top-k most semantically similar matches
-- Retrieved evidence inserted into a structured prompt — Mistral-7B can only use verified facts
-## 🔄 Pipeline
+- Retrieved evidence inserted into a structured prompt — LLaMA 3.1 can only use verified facts
 
-![RAG + SHAP Pipeline](viz_08_rag_pipeline.png)
-
-### 🤖 Local Mistral-7B Inference
-- `Mistral-7B-Instruct-v0.2` in Q4_K_M quantized form via `llama.cpp`
-- Runs fully on CPU — no GPU required, no paid API
+### 🤖 LLaMA 3.1 via Groq API
+- `meta-llama/Llama-3.1-8b-instant` via Groq API
+- Lightning fast inference — responses in under 2 seconds
 - Temperature = 0.2 for factual consistency over creative diversity
-- Context window = 2048 tokens
+- Fully free tier — no GPU required, no paid API
 
 ### 📊 SHAP Explainability
 - LinearRegression proxy fitted on 4 key match features (goals scored, goals conceded, goal diff, win indicator)
 - SHAP LinearExplainer computes per-match feature attributions
-- Global importance ranking + per-match waterfall plots
+- Global importance ranking visualized as bar chart
 
 ### 📈 Exploratory Data Analysis
 - Goals distribution by tournament phase and match outcome
@@ -81,15 +82,18 @@ Stats covered: goals, shots, shots on target, possession, assists, passes, passi
 
 ## 🖥️ Demo
 
-### RAG vs Baseline
+### 🔴 Live App
+> **[https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)**
+> Select any two teams, choose a query type, and get an instant grounded match summary with RAG evidence and SHAP feature importance chart.
+
+### Example Output
 ```
-Query   → "Barcelona's highest-scoring match?"
+Query   → "Summarize the match between Real Madrid and Liverpool"
 
-Baseline LLM → Fabricates a scoreline not present in the dataset ❌
-
-RAG Output  → "Barcelona vs Benfica in the League Phase.
-               Barcelona scored 4 goals, Benfica scored 5.
-               The winner was Benfica." ✅ (traced to UCL-2025 record)
+RAG Output → "In the UEFA Champions League, Real Madrid was eliminated
+              by Liverpool in the league phase with a 2-0 win for Liverpool.
+              Liverpool had 18 shots; Real Madrid had 9 shots.
+              Liverpool ball possession: 60%." ✅
 ```
 
 ### SHAP Feature Attribution
@@ -100,19 +104,26 @@ Top feature → Goal Difference (+3): SHAP = +1.00
               Goals Conceded (2):   SHAP = -0.31
 ```
 
+### RAG vs Baseline
+```
+Query   → "Barcelona's highest-scoring match?"
+
+Baseline LLM → Fabricates a scoreline not present in the dataset ❌
+RAG Output   → Grounded output citing only verified UCL-2025 facts ✅
+```
+
 ---
 
 ## 🚀 Installation
 
 ### Prerequisites
 - Python 3.10 or higher
-- `Mistral-7B-Instruct-v0.2.Q4_K_M.gguf` model file (download separately)
-- CPU is sufficient — no GPU needed
+- Groq API key (free at console.groq.com)
 
 ### Step 1 — Clone the Repository
 ```bash
-git clone https://github.com/bk1210/explainable-match-summaries.git
-cd explainable-match-summaries
+git clone https://github.com/bk1210/Explainable-Match-Summaries.git
+cd Explainable-Match-Summaries
 ```
 
 ### Step 2 — Install Dependencies
@@ -120,13 +131,7 @@ cd explainable-match-summaries
 pip install -r requirements.txt
 ```
 
-### Step 3 — Download the Mistral-7B Model
-Download the quantized model from HuggingFace:
-👉 [Mistral-7B-Instruct-v0.2 GGUF](https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF)
-
-Place `mistral-7b-instruct-v0.2.Q4_K_M.gguf` in the project root.
-
-### Step 4 — Run the Notebook
+### Step 3 — Run the Notebook
 ```bash
 jupyter notebook Code.ipynb
 ```
@@ -144,7 +149,7 @@ Open `Code.ipynb` and run all cells — the notebook handles:
 3. Evidence builder — converts each match row to a natural language string
 4. Sentence-BERT embedding + FAISS indexing (189 × 384-d vectors)
 5. RAG retrieval function (top-k=3 by L2 similarity)
-6. Mistral-7B grounded summary generation
+6. LLaMA 3.1 grounded summary generation via Groq API
 7. SHAP LinearExplainer — global + per-match feature importance
 
 ### Query the System
@@ -186,7 +191,7 @@ User Query → Sentence-BERT encode → FAISS top-k retrieval
 Retrieved Evidence (top-3 most similar matches)
     │
     ▼
-Structured Prompt → Mistral-7B-Instruct (local, Q4_K_M, CPU)
+Structured Prompt → LLaMA 3.1 via Groq API
     │
     ▼
 Grounded Match Summary
@@ -201,11 +206,11 @@ Final Output: Summary + SHAP Attribution
 ### Project Structure
 
 ```
-explainable-match-summaries/
+Explainable-Match-Summaries/
 │
-├── Code.ipynb                        # Full pipeline — EDA, RAG, Mistral, SHAP
+├── Code.ipynb                        # Full pipeline — EDA, RAG, LLaMA, SHAP
 ├── UCL-2025_Team_Stats.xlsx          # Original self-curated UCL 2025 dataset
-├── viz_08_rag_pipeline.png           # RAG + SHAP pipeline diagram
+├── app.py                            # Streamlit live demo app
 ├── requirements.txt                  # Python dependencies
 └── README.md                         # Project documentation
 ```
@@ -239,7 +244,7 @@ explainable-match-summaries/
 | Hallucination rate | High | **Negligible** |
 | Interpretability | None | **SHAP-based** |
 | Mean retrieval similarity | N/A | **0.903** |
-| Deployment cost | API-dependent | **Free (local)** |
+| Deployment cost | API-dependent | **Free** |
 
 ---
 
@@ -250,9 +255,10 @@ explainable-match-summaries/
 | Python 3.10 | Core language |
 | Sentence-Transformers | all-MiniLM-L6-v2 dense embeddings |
 | FAISS | Vector indexing and top-k retrieval |
-| llama-cpp-python | Local Mistral-7B inference (Q4_K_M GGUF) |
+| LLaMA 3.1 via Groq API | Fast free LLM inference |
 | SHAP | LinearExplainer, feature importance |
 | scikit-learn | LinearRegression proxy for SHAP |
+| Streamlit | Live demo web app |
 | Pandas / NumPy | Data processing |
 | Matplotlib / Seaborn | EDA visualisations |
 
@@ -265,12 +271,13 @@ pandas>=2.0.0
 numpy>=1.24.0
 sentence-transformers>=2.2.0
 faiss-cpu>=1.7.4
-llama-cpp-python>=0.2.0
+groq>=0.9.0
 shap>=0.42.0
 scikit-learn>=1.3.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
 openpyxl>=3.1.0
+streamlit>=1.32.0
 ```
 
 Install with:
@@ -309,7 +316,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ## 🙏 Acknowledgements
 
 - [UEFA](https://www.uefa.com) — official source for all UCL 2025 match statistics (manually collected)
-- [TheBloke](https://huggingface.co/TheBloke) — for the Mistral-7B GGUF quantized model
+- [Groq](https://console.groq.com) — for the free LLaMA 3.1 inference API
 - [UKPLab](https://github.com/UKPLab/sentence-transformers) — for Sentence-BERT
 - [Facebook AI](https://github.com/facebookresearch/faiss) — for FAISS
 - [Lundberg & Lee (2017)](https://proceedings.neurips.cc/paper/2017/hash/8a20a8621978632d76c43dfd28b67767-Abstract.html) — SHAP framework
@@ -319,6 +326,8 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 <div align="center">
 
 **⭐ If you found this project useful, please give it a star on GitHub! ⭐**
+
+[![Open in HuggingFace Spaces](https://img.shields.io/badge/🤗-Try%20Live%20Demo-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
 
 *Built with ❤️ for factual, transparent football analytics*
 
