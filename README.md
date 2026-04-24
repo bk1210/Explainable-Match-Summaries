@@ -12,7 +12,7 @@
 
 ### 🚀 [Try the Live Demo →](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
 
-[![Open in HuggingFace Spaces](https://img.shields.io/badge/🤗-Live%20Demo%20on%20HuggingFace%20Spaces-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
+[![Open in HuggingFace Spaces](https://img.shields.io/badge/⚽ -Live%20Demo%20on%20HuggingFace%20Spaces-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
 
 [Features](#-features) • [How It Works](#-how-it-works) • [Results](#-results) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Contact](#-contact)
 
