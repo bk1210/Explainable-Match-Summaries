@@ -1,20 +1,21 @@
-# 🏆 Explainable Match Summaries — RAG + SHAP + LLaMA 3.1
+# ⚽ ClubIQ — Full Stack Football Analytics Platform
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python)
-![LLaMA](https://img.shields.io/badge/LLaMA_3.1-Groq_API-blueviolet?style=for-the-badge)
-![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-orange?style=for-the-badge)
-![SHAP](https://img.shields.io/badge/SHAP-Explainability-yellow?style=for-the-badge)
+![StatsBomb](https://img.shields.io/badge/StatsBomb-Open_Data-red?style=for-the-badge)
+![Streamlit](https://img.shields.io/badge/Streamlit-Live-ff4b4b?style=for-the-badge)
+![SQLite](https://img.shields.io/badge/SQLite-Database-lightblue?style=for-the-badge)
+![PowerBI](https://img.shields.io/badge/Power_BI-Dashboard-yellow?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**Generates factually grounded, explainable football match summaries by combining Retrieval-Augmented Generation (RAG) with SHAP — no hallucinations, no black boxes.**
+**A production-ready football analytics platform delivering Match Intelligence, Player Ratings, and Load Monitoring — built on 1.29 million StatsBomb events.**
 
-### 🚀 [Try the Live Demo →](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
+### 🚀 [Try the Live Demo →](https://huggingface.co/spaces/bk1210/clubiq-football-analytics)
 
-[![Open in HuggingFace Spaces](https://img.shields.io/badge/⚽-Live%20Demo%20on%20HuggingFace%20Spaces-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
+[![Open in HuggingFace Spaces](https://img.shields.io/badge/⚽-Live%20Demo%20on%20HuggingFace%20Spaces-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/clubiq-football-analytics)
 
-[Features](#-features) • [How It Works](#-how-it-works) • [Results](#-results) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Contact](#-contact)
+[Overview](#-overview) • [Dataset](#-dataset) • [Modules](#-modules) • [Results](#-results) • [Installation](#-installation) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Contact](#-contact)
 
 </div>
 
@@ -22,95 +23,88 @@
 
 ## 📌 Overview
 
-General-purpose LLMs produce fluent football summaries but hallucinate statistics. Ask one about a specific match — it might get the winner right but fabricate the scoreline, goalscorers, or disciplinary events. This project fixes that.
+Football clubs — especially at the grassroots and semi-professional level — make critical decisions on team selection, training loads, and tactical preparation without access to structured data. ClubIQ bridges that gap.
 
-**Explainable Match Summaries** grounds every summary in verified UCL-2025 match statistics using a RAG pipeline, and adds a SHAP explainability layer so analysts can see exactly which features drove the model's assessment.
+Built entirely on **StatsBomb professional-grade open event data**, ClubIQ is a three-module analytics platform that gives coaching staff, analysts, and club management actionable insights through three interactive dashboards — Streamlit, Power BI, and Tableau.
 
 Three core contributions:
-- 📚 **Self-Curated UCL-2025 Dataset** — 189 UEFA Champions League 2025 matches, 142 columns per match, **manually collected by the author directly from the official UEFA website (uefa.com)** — independent of any previously published database or third-party data provider
-- 🔍 **RAG Pipeline** — Sentence-BERT + FAISS retrieval feeds verified match facts directly into the LLaMA 3.1 prompt, eliminating hallucination within the knowledge base scope
-- 📊 **SHAP Explainability** — LinearExplainer over key match features surfaces which stats most influenced the generated summary
+- 🏟️ **Match Intelligence** — Team-level shooting efficiency, pressing intensity, and pass accuracy across an entire season
+- 🌟 **Player Ratings** — Composite 100-point rating computed from goals, shots, dribbles, pressures, interceptions, blocks, clearances, and pass accuracy
+- 💪 **Load Monitoring** — Per-player fatigue risk score derived from high-intensity event frequency across all matches
 
 ---
 
 ## 📂 Dataset
 
-> ⚠️ **Original Dataset — Do Not Confuse With Third-Party Sources**
->
-> The `UCL-2025_Team_Stats.xlsx` file included in this repository was **independently curated by the author** by manually collecting match statistics directly from the **official UEFA website ([uefa.com](https://www.uefa.com))** across all stages of the 2024/25 UEFA Champions League season. It is **not derived from Opta, StatsBomb, or any other third-party data provider** and was first published as part of this project.
-
 | Property | Value |
 |---|---|
-| Matches | 189 |
-| Columns | 142 |
-| Phases | League Phase, Play-Off, Round of 16, Quarter-finals, Semi-finals, Final |
-| Source | Official UEFA website (manually collected) |
-| Missing values | 0 |
-| Duplicates | 0 |
+| Source | StatsBomb Open Data |
+| Competition | La Liga 2015/16 |
+| Matches | 380 |
+| Total Events | 1,295,354 |
+| Players Tracked | 546 |
+| Storage | SQLite (`clubiq.db`) |
+| Tables | `matches`, `players`, `events` |
 
-Stats covered: goals, shots, shots on target, possession, assists, passes, passing accuracy, fouls, yellow/red cards, xG, corners, offsides, attacks, clear chances.
+Event types covered: Pass, Shot, Carry, Pressure, Dribble, Block, Clearance, Interception, Ball Recovery, Duel, Foul, Substitution and more.
 
 ---
 
-## ✨ Features
+## ✨ Modules
 
-### 🔍 RAG Pipeline
-- Match stats converted to natural language evidence chunks per match
-- Sentence-BERT `all-MiniLM-L6-v2` encodes 189 evidence strings → 384-d dense vectors
-- FAISS `IndexFlatL2` stores and retrieves top-k most semantically similar matches
-- Retrieved evidence inserted into a structured prompt — LLaMA 3.1 can only use verified facts
+### 🏟️ Module 1 — Match Intelligence
+- Total goals and shots per team across the season
+- Pressing intensity: total pressure events per team
+- Pass accuracy: completed vs attempted passes per team per match
+- Top 10 team rankings across all three metrics
 
-### 🤖 LLaMA 3.1 via Groq API
-- `meta-llama/Llama-3.1-8b-instant` via Groq API
-- Lightning fast inference — responses in under 2 seconds
-- Temperature = 0.2 for factual consistency over creative diversity
-- Fully free tier — no GPU required, no paid API
+### 🌟 Module 2 — Player Ratings
+- Per-player aggregation of 8 action types from 1.29M events
+- Composite rating formula with weighted contributions:
+  - Goals × 8.0 | Shots × 0.5 | Dribbles Won × 1.5
+  - Pressures × 0.3 | Interceptions × 2.0 | Blocks × 1.5
+  - Clearances × 1.0 | Pass Accuracy × 0.2
+- Normalized to 100-point scale
+- Interactive team filter and Top N slider
 
-### 📊 SHAP Explainability
-- LinearRegression proxy fitted on 4 key match features (goals scored, goals conceded, goal diff, win indicator)
-- SHAP LinearExplainer computes per-match feature attributions
-- Global importance ranking visualized as bar chart
+### 💪 Module 3 — Load Monitoring
+- Per-player, per-match load score from high-intensity actions
+- Fatigue risk % = high-load matches / total matches × 100
+- Top 10% threshold flagging for overload detection
+- Scatter plot: avg load vs fatigue risk with match volume sizing
 
-### 📈 Exploratory Data Analysis
-- Goals distribution by tournament phase and match outcome
-- Top 12 teams by total goals scored
-- Possession vs match outcome analysis
-- Pearson correlation heatmap of home team match statistics
-- Attacking efficiency — shots on target vs goals per team
+---
+
+## 🔑 Key Results
+
+- 🥇 **Top Rated Player:** Neymar da Silva Santos Junior — Barcelona (100.0)
+- 🔵 **Top Goals:** Luis Alberto Suárez Díaz — Barcelona (40 goals)
+- ⚠️ **Highest Fatigue Risk:** Augusto Matías Fernández — Celta Vigo (73.3%)
+- 🏆 **Most Goals — Team:** Barcelona (109) vs Real Madrid (108)
+- 🔴 **Top Pressing Team:** Valencia CF
 
 ---
 
 ## 🖥️ Demo
 
-### 🔴 Live App
-> **[https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)**
-> Select any two teams, choose a query type, and get an instant grounded match summary with RAG evidence and SHAP feature importance chart.
+### Live App
+> **[https://huggingface.co/spaces/bk1210/clubiq-football-analytics](https://huggingface.co/spaces/bk1210/clubiq-football-analytics)**
+> Navigate across 3 pages — Match Intelligence, Player Ratings, Load Monitoring — with interactive filters and Plotly charts.
 
-### Example Output
-```
-Query   → "Summarize the match between Real Madrid and Liverpool"
+### Example — Player Ratings Table
+Rank  Player                        Team          Goals  Pass Acc  Rating
+1     Neymar da Silva Santos Junior  Barcelona     26     —         100.00
+2     Asier Illarramendi Andonegi    Real Sociedad  1     —          95.25
+3     Antoine Griezmann              Atlético       22     —          95.21
+4     Gonzalo Escalante              Eibar           3     —          94.42
+5     Lionel Andrés Messi Cuccittini Barcelona     26     —          92.28
 
-RAG Output → "In the UEFA Champions League, Real Madrid was eliminated
-              by Liverpool in the league phase with a 2-0 win for Liverpool.
-              Liverpool had 18 shots; Real Madrid had 9 shots.
-              Liverpool ball possession: 60%." ✅
-```
+### Example — Load Monitoring Table
 
-### SHAP Feature Attribution
-```
-Match   → Real Madrid 5 - 2 Borussia Dortmund
-Top feature → Goal Difference (+3): SHAP = +1.00
-              Goals Scored (5):     SHAP = +0.31
-              Goals Conceded (2):   SHAP = -0.31
-```
-
-### RAG vs Baseline
-```
-Query   → "Barcelona's highest-scoring match?"
-
-Baseline LLM → Fabricates a scoreline not present in the dataset ❌
-RAG Output   → Grounded output citing only verified UCL-2025 facts ✅
-```
+Player                    Team              Avg Load  High Load Matches  Fatigue Risk
+Augusto Matías Fernández  Celta Vigo        120.6     11/15              73.3%
+Gabriel Fernández Arenas  Atlético Madrid   104.6     25/35              71.4%
+Pedro Mosquera Parada     RC Deportivo      105.4     25/37              67.6%
 
 ---
 
@@ -118,12 +112,12 @@ RAG Output   → Grounded output citing only verified UCL-2025 facts ✅
 
 ### Prerequisites
 - Python 3.10 or higher
-- Groq API key (free at console.groq.com)
+- Internet connection (for StatsBomb API pull)
 
 ### Step 1 — Clone the Repository
 ```bash
-git clone https://github.com/bk1210/Explainable-Match-Summaries.git
-cd Explainable-Match-Summaries
+git clone https://github.com/bk1210/clubiq-football-analytics
+cd clubiq-football-analytics
 ```
 
 ### Step 2 — Install Dependencies
@@ -131,153 +125,117 @@ cd Explainable-Match-Summaries
 pip install -r requirements.txt
 ```
 
-### Step 3 — Run the Notebook
+### Step 3 — Run the App
 ```bash
-jupyter notebook Code.ipynb
+streamlit run app.py
 ```
 
 ---
 
 ## 📖 Usage
 
-### Running the Full Pipeline
+### Rebuilding the Database from Scratch
 
-Open `Code.ipynb` and run all cells — the notebook handles:
+Run the Kaggle notebook to:
+1. Pull all 380 La Liga 2015/16 matches via `statsbombpy`
+2. Extract and clean 1,295,354 events into SQLite
+3. Engineer match-level and player-level features
+4. Export 6 CSV files for dashboard consumption
 
-1. Loading `UCL-2025_Team_Stats.xlsx` (189 matches, 142 columns)
-2. EDA — goals distribution, top scorers, possession analysis, correlation heatmap
-3. Evidence builder — converts each match row to a natural language string
-4. Sentence-BERT embedding + FAISS indexing (189 × 384-d vectors)
-5. RAG retrieval function (top-k=3 by L2 similarity)
-6. LLaMA 3.1 grounded summary generation via Groq API
-7. SHAP LinearExplainer — global + per-match feature importance
-
-### Query the System
+### Querying the Database
 ```python
-query = "Real Madrid best attacking performance?"
-summary = generate_summary(query, k=3)
-print(summary)
-# → Grounded output citing only verified UCL-2025 facts
+import sqlite3, pandas as pd
+
+conn = sqlite3.connect('clubiq.db')
+
+top_scorers = pd.read_sql("""
+    SELECT player_name, team,
+           SUM(CASE WHEN event_type='Shot' AND outcome='Goal' THEN 1 ELSE 0 END) as goals
+    FROM events
+    WHERE player_name IS NOT NULL
+    GROUP BY player_name, team
+    ORDER BY goals DESC
+    LIMIT 10
+""", conn)
+
+print(top_scorers)
 ```
 
 ---
 
 ## 🏗️ Architecture
 
-### Full Pipeline
-
-```
-UCL-2025 Dataset (189 matches, 142 columns)
-[Manually curated from uefa.com by the author]
-    │
-    ▼
-── OFFLINE PIPELINE (Indexing) ──────────────────────
-    │
-    ▼
-Evidence Builder
-["Match between Real Madrid and Dortmund. Real Madrid scored 5..."]
-    │
-    ▼
-Sentence-BERT (all-MiniLM-L6-v2) → 384-d dense embeddings
-    │
-    ▼
-FAISS IndexFlatL2 → Vector store of 189 match embeddings
-
-── ONLINE PIPELINE (Query) ───────────────────────────
-
-User Query → Sentence-BERT encode → FAISS top-k retrieval
-    │
-    ▼
-Retrieved Evidence (top-3 most similar matches)
-    │
-    ▼
-Structured Prompt → LLaMA 3.1 via Groq API
-    │
-    ▼
-Grounded Match Summary
-    │
-    ▼
-SHAP LinearExplainer → Feature Importance Scores
-    │
-    ▼
-Final Output: Summary + SHAP Attribution
-```
-
-### Project Structure
-
-```
-Explainable-Match-Summaries/
+StatsBomb Open Data API
 │
-├── Code.ipynb                        # Full pipeline — EDA, RAG, LLaMA, SHAP
-├── UCL-2025_Team_Stats.xlsx          # Original self-curated UCL 2025 dataset
-├── app.py                            # Streamlit live demo app
-├── requirements.txt                  # Python dependencies
-└── README.md                         # Project documentation
-```
+▼
+── OFFLINE PIPELINE (Data Engineering) ──────────────
+statsbombpy → Pull 380 matches + 1.29M events
+│
+▼
+Pandas Feature Engineering
+(event_type extraction, outcome parsing, location parsing)
+│
+▼
+SQLite Database
+┌─────────────────────────────────────┐
+│  matches  │  players  │   events   │
+│  380 rows │  546 rows │  1.29M rows│
+└─────────────────────────────────────┘
+│
+▼
+── ANALYTICS MODULES ─────────────────────────────────
+┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+│ Match            │ │ Player           │ │ Load             │
+│ Intelligence     │ │ Ratings          │ │ Monitoring       │
+│                  │ │                  │ │                  │
+│ shots, pressure, │ │ composite 100-pt │ │ fatigue risk %   │
+│ pass accuracy    │ │ rating formula   │ │ per player       │
+└──────────────────┘ └──────────────────┘ └──────────────────┘
+│                    │                    │
+▼                    ▼                    ▼
+── VISUALIZATION LAYER ───────────────────────────────
+Streamlit + Plotly     Power BI Desktop     Tableau Public
+(HuggingFace Deploy)   (Management View)    (Tactical View)
 
----
+### File Structure
 
-## 📊 Results
-
-### RAG Retrieval Quality
-
-| Metric | RAG (Top-k) | Random Baseline |
-|---|---|---|
-| Mean cosine similarity | **0.903** | 0.373 |
-| Standard deviation | 0.048 | 0.082 |
-| Proportion ≥ 0.7 | **100%** | < 5% |
-
-### SHAP Feature Importance
-
-| Feature | Mean \|SHAP\| | Direction |
-|---|---|---|
-| Goal Difference | **1.000** | Positive |
-| Goals Scored | 0.312 | Positive |
-| Goals Conceded | 0.310 | Negative |
-| Binary Win Indicator | 0.089 | Positive |
-
-### System Comparison
-
-| Criterion | Baseline LLM | This System |
-|---|---|---|
-| Factual accuracy | Low–Medium | **High** |
-| Hallucination rate | High | **Negligible** |
-| Interpretability | None | **SHAP-based** |
-| Mean retrieval similarity | N/A | **0.903** |
-| Deployment cost | API-dependent | **Free** |
+clubiq-football-analytics/
+│
+├── app.py                  # Streamlit dashboard (3 pages)
+├── requirements.txt        # Python dependencies
+├── match_shots.csv         # Module 1 — shot & goal data
+├── match_passes.csv        # Module 1 — pass accuracy data
+├── match_pressure.csv      # Module 1 — pressing data
+├── player_ratings.csv      # Module 2 — composite ratings
+├── load_summary.csv        # Module 3 — fatigue risk data
+└── matches.csv             # Base match results
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Technology | Purpose |
+| Layer | Tools |
 |---|---|
-| Python 3.10 | Core language |
-| Sentence-Transformers | all-MiniLM-L6-v2 dense embeddings |
-| FAISS | Vector indexing and top-k retrieval |
-| LLaMA 3.1 via Groq API | Fast free LLM inference |
-| SHAP | LinearExplainer, feature importance |
-| scikit-learn | LinearRegression proxy for SHAP |
-| Streamlit | Live demo web app |
-| Pandas / NumPy | Data processing |
-| Matplotlib / Seaborn | EDA visualisations |
+| Data Pull | `statsbombpy` |
+| Processing | `pandas`, `numpy` |
+| Storage | `SQLite` via `sqlalchemy` |
+| Dashboard 1 | `Streamlit` + `Plotly` — HuggingFace Spaces |
+| Dashboard 2 | `Power BI Desktop` |
+| Dashboard 3 | `Tableau Public` |
+| Notebook | Kaggle (NVIDIA T4 GPU) |
 
 ---
 
 ## 📦 Dependencies
 
 ```txt
+statsbombpy>=1.0.0
 pandas>=2.0.0
 numpy>=1.24.0
-sentence-transformers>=2.2.0
-faiss-cpu>=1.7.4
-groq>=0.9.0
-shap>=0.42.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-openpyxl>=3.1.0
+sqlalchemy>=2.0.0
 streamlit>=1.32.0
+plotly>=5.18.0
+tqdm>=4.65.0
 ```
 
 Install with:
@@ -289,12 +247,22 @@ pip install -r requirements.txt
 
 ## 🔮 Future Improvements
 
-- [ ] Enrich evidence strings with possession, shots on target, xG, and player-level stats
-- [ ] Hybrid retrieval — combine dense vector search with structured relational filtering
-- [ ] SHAP / LIME attribution at the language model token level
-- [ ] Real-time pipeline connected to StatsBomb / Opta live match feeds
-- [ ] Multi-modal integration — player tracking + formation metadata
-- [ ] Multilingual summaries (Spanish, French, Portuguese, German)
+- [ ] Multi-season support — pull all available StatsBomb competitions
+- [ ] xG model — train expected goals model from shot location + context
+- [ ] Pass network graphs — per-match player connection maps
+- [ ] Real-time pipeline — connect to live match feeds via StatsBomb API
+- [ ] Club data integration — plug in any club's proprietary CSV match data
+- [ ] Opposition profiling — automated pre-match opponent report generation
+- [ ] Multilingual dashboard — Spanish, Portuguese, French support
+
+---
+
+## 📌 Note for Clubs
+
+> This platform is built on professional-grade StatsBomb event data.
+> The exact same pipeline can be deployed on any club's internal match data
+> to generate real-time player ratings, fatigue alerts, and match intelligence
+> reports within days — no infrastructure cost, no data science team required.
 
 ---
 
@@ -310,16 +278,16 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 - 📧 Email: bharathkesav1275@gmail.com
 - 🐙 GitHub: [@bk1210](https://github.com/bk1210)
 - 🎓 Institution: Amrita Vishwa Vidyapeetham, Coimbatore
+- 🤗 HuggingFace: [bk1210](https://huggingface.co/bk1210)
 
 ---
 
 ## 🙏 Acknowledgements
 
-- [UEFA](https://www.uefa.com) — official source for all UCL 2025 match statistics (manually collected)
-- [Groq](https://console.groq.com) — for the free LLaMA 3.1 inference API
-- [UKPLab](https://github.com/UKPLab/sentence-transformers) — for Sentence-BERT
-- [Facebook AI](https://github.com/facebookresearch/faiss) — for FAISS
-- [Lundberg & Lee (2017)](https://proceedings.neurips.cc/paper/2017/hash/8a20a8621978632d76c43dfd28b67767-Abstract.html) — SHAP framework
+- [StatsBomb](https://statsbomb.com) — for the open event data
+- [HuggingFace](https://huggingface.co) — for free Spaces deployment
+- [Plotly](https://plotly.com) — for interactive visualizations
+- [Streamlit](https://streamlit.io) — for the web app framework
 
 ---
 
@@ -327,8 +295,8 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 **⭐ If you found this project useful, please give it a star on GitHub! ⭐**
 
-[![Open in HuggingFace Spaces](https://img.shields.io/badge/🤗-Try%20Live%20Demo-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/Explainable-Match-Summaries)
+[![Open in HuggingFace Spaces](https://img.shields.io/badge/⚽-Try%20Live%20Demo-blue?style=for-the-badge)](https://huggingface.co/spaces/bk1210/clubiq-football-analytics)
 
-*Built with ❤️ for factual, transparent football analytics*
+*Built with ❤️ for data-driven football clubs*
 
 </div>
